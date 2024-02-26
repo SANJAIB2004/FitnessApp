@@ -1,61 +1,76 @@
-import { useState } from "react";
-import { useWorkoutContext } from "../hooks/useWorkoutContext";
+import { useState } from 'react'
+import { useWorkoutsContext } from '../hooks/useWorkoutsContext'
 
 const WorkoutForm = () => {
-    const { dispatch } = useWorkoutContext();
-  const [title, setTitle] = useState("");
-  const [reps, setReps] = useState("");
-  const [sets, setSets] = useState("");
-  const [error, setError] = useState(null);
-  const addWorkoutHandler = async (e) => {
-    e.preventDefault();
-    const workout = { title, reps, sets };
-    const response = await fetch("http://localhost:4000/api/workouts/", {
-      method: "POST",
+  const { dispatch } = useWorkoutsContext()
+
+  const [title, setTitle] = useState('')
+  const [sets, setSets] = useState('')
+  const [reps, setReps] = useState('')
+  const [error, setError] = useState(null)
+  const [emptyFields, setEmptyFields] = useState([])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const workout = {title, sets, reps}
+    
+    const response = await fetch('/api/workouts', {
+      method: 'POST',
       body: JSON.stringify(workout),
       headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
+        'Content-Type': 'application/json'
+      }
+    })
+    const json = await response.json()
+
     if (!response.ok) {
-      setError(data.error);
-    } else {
-      setTitle("");
-      setReps("");
-      setSets("");
-      setError(null);
-      console.log("Workout added successfully!");
-      dispatch({ type: "CREATE_WORKOUT", payload: data });
+      setError(json.error)
+      setEmptyFields(json.emptyFields)
     }
-  };
+    if (response.ok) {
+      setEmptyFields([])
+      setError(null)
+      setTitle('')
+      setSets('')
+      setReps('')
+      dispatch({type: 'CREATE_WORKOUT', payload: json})
+    }
+
+  }
 
   return (
-    <div>
-      <form className="create" onSubmit={addWorkoutHandler}>
-        <h3>Add a workout</h3>
-        <label>Workout Title:</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <label>Sets:</label>
-        <input
-          type="number"
-          value={sets}
-          onChange={(e) => setSets(e.target.value)}
-        />
-        <label>Reps:</label>
-        <input
-          type="number"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-        />
-        <button>Add Workout</button>
-        {error && <div className="error">{error}</div>}
-      </form>
-    </div>
-  );
-};
-export default WorkoutForm;
+    <form className="create" onSubmit={handleSubmit}> 
+      <h3>Add a New Workout</h3>
+
+      <label>Excersize Title:</label>
+      <input 
+        type="text" 
+        onChange={(e) => setTitle(e.target.value)} 
+        value={title}
+        className={emptyFields.includes('title') ? 'error' : ''}
+      />
+
+      <label>Number of Sets:</label>
+      <input 
+        type="number" 
+        onChange={(e) => setSets(e.target.value)} 
+        value={sets}
+        className={emptyFields.includes('sets') ? 'error' : ''}
+      />
+
+      <label>Number of Reps:</label>
+      <input 
+        type="number" 
+        onChange={(e) => setReps(e.target.value)} 
+        value={reps}
+        className={emptyFields.includes('reps') ? 'error' : ''}
+      />
+
+      <button>Add Workout</button>
+      {error && <div className="error">{error}</div>}
+    </form>
+  )
+}
+
+export default WorkoutForm
